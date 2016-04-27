@@ -1,0 +1,199 @@
+
+/*********************************************************/
+// module:delay,delay_sva,tb_delay
+// file name:delay,delay_sva,tb_delay
+// version :  1.0
+// date :  2016.04.26
+// writer :  탁 형옥 (hyungok tak)
+// CODE : RTL Design code + (SVA) + testbench 
+// summary : 
+//
+/*********************************************************/
+
+
+
+module delay
+ (
+   output out,
+   input d,clk
+   );
+reg q;
+
+wire qn = ~q;
+
+assign out = d & qn;
+  
+always @(posedge clk)  q = d; 
+      
+endmodule
+
+
+module delay_sva
+  (
+    // monitor output port
+    input out,
+    // monitor input port  
+    input d,clk,
+    // monitor internal signal
+    input q,qn
+    );
+ always @( out,q )
+  begin
+   assert #0 (qn==~q) else $display("qn[%d] != ~q[%d]",qn,~q);
+  end 
+     
+ always @( d,q,out)
+  begin
+   assert #0 (out==(d&qn)) else $display("out[%d] = d[%d] & qn[%d]",out,d,qn);
+  end  
+  
+ always @(posedge clk) assert #0 (q==d) else $display("q[%d]=d[%d]",q,d); 
+     
+endmodule
+
+`timescale 1ns/1ns
+module tb_delay;
+  reg d,clk;
+  wire out;
+  wire q = DUT.q;
+  wire qn = DUT.qn;
+  
+ delay DUT (.*);
+ delay_sva Checker
+  (
+    out,  // monitor output port    
+    d,clk, // monitor input port    
+    q,qn   // monitor internal signal    
+    );
+
+localparam Tp=20;   
+
+always #(Tp/2) clk =~clk;
+
+initial 
+ begin
+  #0 clk=0; d=1'b0; 
+  #20 d=1'b1;
+  #40 d=1'b0;
+  #20 d=1'b1;
+  #60 d=1'b0;
+ end    
+  
+endmodule
+
+/*********************************************************/
+// 모듈:test_comb,test_comb_sva,tb_test_comb
+// 파일이름:test_comb,test_comb_sva,tb_test_comb
+// version :  1.0
+// date :  2016.04.26
+// writer :  탁 형옥 (hyungok tak)
+// CODE : RTL Design code + (SVA) + testbench 
+// summary : 
+//
+/*********************************************************/
+
+module test_comb
+ (
+  output [6:0]  w,
+  input [1:0] sw
+  );
+  
+ assign w[0] = &sw;
+ assign w[1] = |sw;
+ assign w[2] = ~&sw;
+ assign w[3] = ~|sw;
+ assign w[4] = ^sw;
+ assign w[5] = ~sw[0];
+ assign w[6] = ~sw[1];
+  
+  
+endmodule
+
+module led
+ (
+   output led_on,
+   input led_in
+   );
+ 
+assign  led_on = led_in;   
+
+endmodule
+
+module test_top
+ (
+  output [68:62] pin,
+  output [6:0] w,
+  input [1:0] sw
+  );
+  
+ wire [6:0] wo;
+  
+  
+ led  U0 [6:0] (wo,w);
+// diode  [6:0] U0 (.anode(w),cathode(wo));
+ test_comb U1 (w,sw);
+ 
+ assign pin = wo; 
+  
+endmodule
+
+module test_comb_sva
+ (
+  // monitor output port
+  input [68:62] pin,
+  // monitor input port
+  input [1:0] sw,
+  // monitor internal signal
+  input [6:0] w,wo  
+  );
+  
+always_comb
+ begin:compare_logic
+   assert #0 (w[0] == &sw)    else $display(" the value of  and is not same %d!=%d" ,w[0],&sw);
+   assert #0 (w[1] == |sw)    else $display(" the value of  or is not same %d!=%d"  ,w[1],|sw);
+   assert #0 (w[2] == ~&sw)   else $display(" the value of  nand is not same %d!=%d",w[2],~&sw);
+   assert #0 (w[3] == ~|sw)   else $display(" the value of  nor is not same %d!=%d" ,w[3],~|sw);
+   assert #0 (w[4] == ^sw)    else $display(" the value of  exor is not same %d!=%d",w[4],^sw);
+   assert #0 (w[5] == ~sw[0]) else $display(" the value of  and is not same %d!=%d" ,w[5],~sw[0]);
+   assert #0 (w[6] == ~sw[1]) else $display(" the value of  and is not same %d!=%d" ,w[6],~sw[1]);  
+ end
+ 
+ always_comb
+  begin:check_led
+    assert #0 (w == wo) else $display(" leds are not working on or off : w[%x]=wo[%x]",w,wo);
+  end
+  
+ always_comb
+  begin:monitor_out
+    assert #0 (pin == wo) else $display(" pins are not working on or off : pin[%x]=wo[%x]",pin,wo);
+  end
+  
+endmodule
+
+`timescale 1ns/1ns
+
+module tb_test_top;
+  wire [68:62] pin;
+  wire [6:0] w;
+  reg [1:0] sw;
+  wire [6:0] wo = DUT.wo;
+  
+ test_top DUT (.*);
+ test_comb_sva Checker 
+ (
+   pin,   // monitor output port
+   sw,    // monitor input port
+   w,wo   // monitor internal signal 
+  );
+
+initial
+ begin
+   #0  sw=2'b00; 
+   #20 sw=2'b01;
+   #20 sw=2'b10; 
+   #20 sw=2'b11;    
+ end
+
+
+endmodule
+
