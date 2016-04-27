@@ -4,9 +4,10 @@
 // file name:delay,delay_sva,tb_delay
 // version :  1.0
 // date :  2016.04.26
-// writer :  탁 형옥 (hyungok tak)
+// writer : hyungok tak
 // CODE : RTL Design code + (SVA) + testbench 
 // summary : 
+// contact : hotak321@hanafos.com
 //
 /*********************************************************/
 
@@ -82,11 +83,11 @@ initial
 endmodule
 
 /*********************************************************/
-// 모듈:test_comb,test_comb_sva,tb_test_comb
-// 파일이름:test_comb,test_comb_sva,tb_test_comb
+// module:test_comb,test_comb_sva,tb_test_comb
+// file name:test_comb,test_comb_sva,tb_test_comb
 // version :  1.0
 // date :  2016.04.26
-// writer :  탁 형옥 (hyungok tak)
+// writer :  hyungok tak
 // CODE : RTL Design code + (SVA) + testbench 
 // summary : 
 //
